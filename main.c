@@ -42,7 +42,7 @@ uint32_t g_ui32SysClock;
 
 // mongoose Event Handler
 static struct mg_mgr mgr;
-// 172.20.146.158
+
 static const char *s_address = "169.254.82.238:1883";
 static const char *s_user_name = "";
 static const char *s_password = "";
@@ -62,9 +62,9 @@ void ev_handler(struct mg_connection *nc, int ev, void *ev_data){
          memset(&opts, 0, sizeof(opts));
          opts.user_name = s_user_name;
          opts.password = s_password;
-         opts.keep_alive = 0;
+
          mg_set_protocol_mqtt(nc);
-         mg_send_mqtt_handshake_opt(nc, "Daniel client", opts);
+         mg_send_mqtt_handshake_opt(nc, "MQTT client Gruppe 8", opts);
          break;
        }
        case MG_EV_MQTT_CONNACK:
@@ -76,18 +76,11 @@ void ev_handler(struct mg_connection *nc, int ev, void *ev_data){
          UARTprintf("Subscribing to '%s'\n", s_topic);
          mg_mqtt_subscribe(nc, &s_topic_expr, 1, 42);
          break;
-       case MG_EV_MQTT_PUBACK:
-         UARTprintf("Message publishing acknowledged (msg_id: %d)\n", msg->message_id);
-         break;
        case MG_EV_MQTT_SUBACK:
          UARTprintf("Subscription acknowledged, forwarding to '/test'\n");
          break;
        case MG_EV_MQTT_PUBLISH: {
-   #if 0
-           char hex[1024] = {0};
-           mg_hexdump(nc->recv_mbuf.buf, msg->payload.len, hex, sizeof(hex));
-           UARTprintf("Got incoming message %.*s:\n%s", (int)msg->topic.len, msg->topic.p, hex);
-   #else
+
            // Save topic in char array
            char topic[msg->topic.len];
            int i = 0;
@@ -114,9 +107,6 @@ void ev_handler(struct mg_connection *nc, int ev, void *ev_data){
                    io_set_led(false);
                }
            }
-
-   #endif
-
          UARTprintf("\nForwarding to /test\n");
          mg_mqtt_publish(nc, "/test", 65, MG_MQTT_QOS(0), msg->payload.p,
                          msg->payload.len);
@@ -132,6 +122,7 @@ void ev_handler(struct mg_connection *nc, int ev, void *ev_data){
            }
            //exit(1);
      }
+
 }
 // Display an lwIP type IP Address.
 void
@@ -170,21 +161,20 @@ lwIPHostTimerHandler(void)
         else
         {
             // Display the new IP address.
-            UARTprintf("IP Address: https://");
             DisplayIPAddress(ui32NewIPAddress);
         }
         // Save the new IP address.
         g_ui32IPAddress = ui32NewIPAddress;
     }
 
-    // If there is not an IP address.
+
     if((ui32NewIPAddress == 0) || (ui32NewIPAddress == 0xffffffff))
     {
         // Do nothing and keep waiting.
     }else{
         if(flag == 0){
 
-            UARTprintf("Adresse: %s\n", s_address);
+            UARTprintf("\nAdresse: %s\n", s_address);
 
             if (mg_connect(&mgr, s_address, ev_handler) == NULL) {
               UARTprintf("\nConnection Failed");
@@ -266,10 +256,6 @@ main(void)
         UARTprintf("No MAC programmed!\n");
         return 1;
     }
-
-    // Tell the user what we are doing just now.
-    UARTprintf("Waiting for IP.\n");
-
 
     // Convert the 24/24 split MAC address from NV ram into a 32/16 split MAC
     // address needed to program the hardware registers, then program the MAC
